@@ -371,14 +371,8 @@ format_time (time_t t) {
 
 }
 
-static const char *
-format_ethermac (uint8_t ethermac[6]) {
-  static char buf[1024];
-  snprintf (buf, sizeof (buf), "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x",
-            ethermac[0], ethermac[1], ethermac[2], ethermac[3],
-            ethermac[4], ethermac[5]);
-  return buf;
-}
+#define PRI_ETHERMAC "%.2x:%.2x:%.2x:%.2x:%.2x:%.2x"
+#define FORMAT_ETHERMAC(em) em[0], em[1], em[2], em[3], em[4], em[5]
 
 /* Format a flow in a verbose and ugly way */
 static const char *
@@ -399,7 +393,7 @@ format_flow (struct FLOW *flow) {
             "octets>:%u packets>:%u octets<:%u packets<:%u "
             "start:%s.%03lld finish:%s.%03lld tcp>:%02x tcp<:%02x "
             "flowlabel>:%08x flowlabel<:%08x "
-            "vlan>:%u vlan<:%u ether:%s <> %s", flow->flow_seq, addr1,
+            "vlan>:%u vlan<:%u ether:" PRI_ETHERMAC " <> " PRI_ETHERMAC, flow->flow_seq, addr1,
             ntohs (flow->port[0]), addr2, ntohs (flow->port[1]),
             (int) flow->protocol, flow->octets[0], flow->packets[0],
             flow->octets[1], flow->packets[1], start_time,
@@ -407,8 +401,8 @@ format_flow (struct FLOW *flow) {
             (long long) ((flow->flow_last.tv_usec + 500) / 1000),
             flow->tcp_flags[0], flow->tcp_flags[1], flow->ip6_flowlabel[0],
             flow->ip6_flowlabel[1], flow->vlanid[0], flow->vlanid[1],
-            format_ethermac (flow->ethermac[0]),
-            format_ethermac (flow->ethermac[1]));
+            FORMAT_ETHERMAC (flow->ethermac[0]),
+            FORMAT_ETHERMAC (flow->ethermac[1]));
 
   return (buf);
 }
@@ -424,15 +418,18 @@ format_flow_brief (struct FLOW *flow) {
 
   snprintf (buf, sizeof (buf),
             "seq:%" PRIu64 " [%s]:%hu <> [%s]:%hu proto:%u "
-            "vlan>:%u vlan<:%u  ether:%s <> %s ",
+            "vlan>:%u vlan<:%u  ether:" PRI_ETHERMAC " <> " PRI_ETHERMAC " ",
             flow->flow_seq,
             addr1, ntohs (flow->port[0]), addr2, ntohs (flow->port[1]),
             (int) flow->protocol, flow->vlanid[0], flow->vlanid[1],
-            format_ethermac (flow->ethermac[0]),
-            format_ethermac (flow->ethermac[1]));
+            FORMAT_ETHERMAC (flow->ethermac[0]),
+            FORMAT_ETHERMAC (flow->ethermac[1]));
 
   return (buf);
 }
+
+#undef PRI_ETHERMAC
+#undef FORMAT_ETHERMAC
 
 /* Fill in transport-layer (tcp/udp) portions of flow record */
 static void
